@@ -51,5 +51,7 @@ jobs:
       - name: Build
         run: npm run build
 
+      # `prepublishOnly` rejects a bare `npm publish`; n8n-node release sets
+      # RELEASE_MODE and NPM_CONFIG_PROVENANCE, then lints, builds, and publishes.
       - name: Publish with provenance
-        run: npm publish --provenance --access public
+        run: npm run release
