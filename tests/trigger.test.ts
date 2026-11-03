@@ -247,6 +247,24 @@ describe('PageWeaveTrigger lifecycle', () => {
 		expect(requests[1].method).toBe('DELETE');
 		expect(requests[1].url).toContain('/webhooks/wh-test');
 	});
+	it('deletes the stored endpoint after the n8n URL changes', async () => {
+		const trigger = new PageWeaveTrigger();
+		const { context, requests, state } = createHookContext(
+			{ websiteId: { mode: 'id', value: 'site-1' }, webhookUrl: WEBHOOK_URL },
+			[{ statusCode: 204 }],
+			{
+				webhookId: 'wh-live',
+				webhookSecret: 'secret-1',
+				webhookUrl: 'https://old.example.com/webhook/pageweave',
+			},
+		);
+
+		await expect(trigger.webhookMethods.default.delete.call(context)).resolves.toBe(true);
+
+		expect(requests[0].method).toBe('DELETE');
+		expect(requests[0].url).toContain('/webhooks/wh-live');
+		expect(state).not.toHaveProperty('webhookId');
+	});
 });
 
 describe('PageWeaveTrigger webhook', () => {

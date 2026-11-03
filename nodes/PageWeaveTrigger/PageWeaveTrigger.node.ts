@@ -404,17 +404,19 @@ export class PageWeaveTrigger implements INodeType {
 				const websiteId = requireWebsite(this);
 
 				// Test cleanup runs with mode "internal", so identify the slot by URL.
+				// When n8n moved to a new hostname, the stored URL no longer matches;
+				// fall back to the slot whose webhook URL kind matches the request.
 				const slots: Slot[] = ['live', 'test'];
-				let slot = slots.find((candidate) => readState(staticData, candidate).url === url);
-				let webhookId = slot ? readState(staticData, slot).id : undefined;
+				const matched = slots.find((candidate) => readState(staticData, candidate).url === url);
+				const slot: Slot = matched ?? (url.includes('/webhook-test/') ? 'test' : 'live');
+				let webhookId = readState(staticData, slot).id;
 
 				if (!webhookId) {
 					webhookId = await findEndpointIdByUrl(this, websiteId, url);
-					if (!slot) slot = url.includes('/webhook-test/') ? 'test' : 'live';
 				}
 
 				if (!webhookId) {
-					if (slot) clearState(staticData, slot);
+					clearState(staticData, slot);
 					return true;
 				}
 
@@ -429,7 +431,7 @@ export class PageWeaveTrigger implements INodeType {
 					}
 				}
 
-				if (slot) clearState(staticData, slot);
+				clearState(staticData, slot);
 				return true;
 			},
 		},
