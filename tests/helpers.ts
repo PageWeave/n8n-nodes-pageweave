@@ -54,3 +54,31 @@ export function createContext(
 		httpRequestWithAuthentication,
 	};
 }
+
+export function createExecuteContext(
+	params: Record<string, unknown>,
+	responses: MockResponse[],
+	extra: Record<string, unknown> = {},
+) {
+	const base = createContext(responses);
+	const context = {
+		...base.context,
+		getNodeParameter: (name: string, _itemIndex: number, fallback?: unknown) =>
+			name in params ? params[name] : fallback,
+		continueOnFail: () => false,
+		helpers: {
+			...base.context.helpers,
+			prepareBinaryData: vi.fn(async (data: Buffer, fileName: string, mimeType: string) => ({
+				data: data.toString('base64'),
+				fileName,
+				mimeType,
+			})),
+		},
+		...extra,
+	};
+
+	return {
+		...base,
+		context: context as unknown as IExecuteFunctions,
+	};
+}

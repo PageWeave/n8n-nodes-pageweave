@@ -1,0 +1,50 @@
+{
+	"name": "PageWeave: audit failed webhook deliveries",
+	"nodes": [
+		{
+			"parameters": {},
+			"id": "3c7d5e3a-8d3a-4b8c-9f2b-5c8c6e4a9c01",
+			"name": "When clicking Test workflow",
+			"type": "n8n-nodes-base.manualTrigger",
+			"typeVersion": 1,
+			"position": [0, 0]
+		},
+		{
+			"parameters": {
+				"resource": "webhook",
+				"operation": "getAllDeliveries",
+				"websiteId": {
+					"__rl": true,
+					"mode": "id",
+					"value": "REPLACE_WITH_WEBSITE_ID"
+				},
+				"webhookId": {
+					"__rl": true,
+					"mode": "id",
+					"value": "REPLACE_WITH_WEBHOOK_ID"
+				},
+				"returnAll": false,
+				"limit": 50,
+				"deliveryFilters": {
+					"success": "false"
+				}
+			},
+			"id": "3c7d5e3a-8d3a-4b8c-9f2b-5c8c6e4a9c02",
+			"name": "Failed Deliveries",
+			"type": "@pageweave/n8n-nodes-pageweave.pageWeave",
+			"typeVersion": 1,
+			"position": [220, 0]
+		}
+	],
+	"pinData": {},
+	"connections": {
+		"When clicking Test workflow": {
+			"main": [[{ "node": "Failed Deliveries", "type": "main", "index": 0 }]]
+		}
+	},
+	"active": false,
+	"settings": { "executionOrder": "v1" },
+	"versionId": "3c7d5e3a-8d3a-4b8c-9f2b-5c8c6e4a9c03",
+	"meta": { "templateCredsSetupCompleted": false },
+	"tags": []
+}

@@ -1,0 +1,56 @@
+{
+	"name": "PageWeave: form submissions to a table",
+	"nodes": [
+		{
+			"parameters": {
+				"websiteId": {
+					"__rl": true,
+					"mode": "id",
+					"value": "REPLACE_WITH_WEBSITE_ID"
+				},
+				"events": ["form.submission.created"],
+				"formIds": ""
+			},
+			"id": "1f8b0b1e-6a1e-4f6a-9d0f-3a6a4c2e7a01",
+			"name": "PageWeave Trigger",
+			"type": "@pageweave/n8n-nodes-pageweave.pageWeaveTrigger",
+			"typeVersion": 1,
+			"position": [0, 0],
+			"webhookId": "1f8b0b1e-6a1e-4f6a-9d0f-3a6a4c2e7a02"
+		},
+		{
+			"parameters": {
+				"resource": "row",
+				"operation": "create",
+				"websiteId": {
+					"__rl": true,
+					"mode": "id",
+					"value": "REPLACE_WITH_WEBSITE_ID"
+				},
+				"tableId": {
+					"__rl": true,
+					"mode": "id",
+					"value": "REPLACE_WITH_TABLE_ID"
+				},
+				"data": "={{ $json.data.fields }}",
+				"publishState": "now"
+			},
+			"id": "1f8b0b1e-6a1e-4f6a-9d0f-3a6a4c2e7a03",
+			"name": "Create Row",
+			"type": "@pageweave/n8n-nodes-pageweave.pageWeave",
+			"typeVersion": 1,
+			"position": [220, 0]
+		}
+	],
+	"pinData": {},
+	"connections": {
+		"PageWeave Trigger": {
+			"main": [[{ "node": "Create Row", "type": "main", "index": 0 }]]
+		}
+	},
+	"active": false,
+	"settings": { "executionOrder": "v1" },
+	"versionId": "1f8b0b1e-6a1e-4f6a-9d0f-3a6a4c2e7a04",
+	"meta": { "templateCredsSetupCompleted": false },
+	"tags": []
+}

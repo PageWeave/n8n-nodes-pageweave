@@ -29,6 +29,7 @@ const REQUIRED_OPERATIONS = [
 	['updateTableRow', 'patch', '/api/v1/websites/{website_id}/tables/{table_id}/rows/{id}'],
 	['deleteTableRow', 'delete', '/api/v1/websites/{website_id}/tables/{table_id}/rows/{id}'],
 	['createRowImport', 'post', '/api/v1/websites/{website_id}/tables/{table_id}/row_imports'],
+	['getRowImport', 'get', '/api/v1/websites/{website_id}/tables/{table_id}/row_imports/{id}'],
 	['exportTableRows', 'get', '/api/v1/websites/{website_id}/tables/{table_id}/rows/export'],
 	// Webhook
 	['listWebhooks', 'get', '/api/v1/websites/{website_id}/webhooks'],

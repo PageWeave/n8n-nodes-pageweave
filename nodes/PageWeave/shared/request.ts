@@ -202,10 +202,15 @@ async function wait(ms: number): Promise<void> {
 	await sleep(Math.min(ms, MAX_RETRY_DELAY_MS));
 }
 
-export async function pageWeaveRequest<T = unknown>(
+export interface PageWeaveDownload {
+	data: Buffer;
+	headers: IDataObject;
+}
+
+async function sendRequest(
 	context: PageWeaveContext,
 	options: PageWeaveRequestOptions,
-): Promise<T> {
+): Promise<PageWeaveHttpResponse> {
 	const url = `${getBaseUrl(context)}${normalizeApiPath(options.path)}`;
 	const headers: IDataObject = {
 		Accept: 'application/json',
@@ -237,23 +242,16 @@ export async function pageWeaveRequest<T = unknown>(
 				returnFullResponse: true,
 				ignoreHttpStatusErrors: true,
 				disableFollowRedirect: true,
-				encoding: options.encoding === 'json' ? undefined : options.encoding,
+				encoding:
+					options.encoding === undefined || options.encoding === 'json'
+						? undefined
+						: options.encoding,
 			},
 		)) as PageWeaveHttpResponse;
 
 		lastResponse = response;
 
-		if (response.statusCode >= 200 && response.statusCode < 300) {
-			if (response.statusCode === 204) return undefined as T;
-			if (options.encoding === 'arraybuffer') return response.body as T;
-			if (options.encoding === 'text') return bodyToText(response.body) as T;
-			if (options.encoding === 'json') {
-				if (response.body && typeof response.body === 'object') return response.body as T;
-				const text = bodyToText(response.body).trim();
-				return (text ? JSON.parse(text) : undefined) as T;
-			}
-			return response.body as T;
-		}
+		if (response.statusCode >= 200 && response.statusCode < 300) return response;
 
 		if (attempt < MAX_ATTEMPTS && shouldRetry(response.statusCode, response.headers ?? {})) {
 			const retryAfter = parseRetryAfter(response.headers ?? {}) ?? 1000 * 2 ** (attempt - 1);
@@ -279,6 +277,39 @@ export async function pageWeaveRequest<T = unknown>(
 		{ message, description, httpCode: String(status) },
 		{ itemIndex: options.itemIndex, httpCode: String(status), message, description },
 	);
+}
+
+export async function pageWeaveRequest<T = unknown>(
+	context: PageWeaveContext,
+	options: PageWeaveRequestOptions,
+): Promise<T> {
+	const response = await sendRequest(context, options);
+
+	if (response.statusCode === 204) return undefined as T;
+	if (options.encoding === 'arraybuffer') return response.body as T;
+	if (options.encoding === 'text') return bodyToText(response.body) as T;
+	if (options.encoding === 'json') {
+		if (response.body && typeof response.body === 'object') return response.body as T;
+		const text = bodyToText(response.body).trim();
+		return (text ? JSON.parse(text) : undefined) as T;
+	}
+	return response.body as T;
+}
+
+export async function pageWeaveDownload(
+	context: PageWeaveContext,
+	options: PageWeaveRequestOptions,
+): Promise<PageWeaveDownload> {
+	const response = await sendRequest(context, { ...options, encoding: 'arraybuffer' });
+	const body = response.body;
+
+	const data = Buffer.isBuffer(body)
+		? body
+		: body instanceof ArrayBuffer
+			? Buffer.from(body)
+			: Buffer.from(bodyToText(body), 'utf8');
+
+	return { data, headers: response.headers ?? {} };
 }
 
 export function makeIdempotencyKey(

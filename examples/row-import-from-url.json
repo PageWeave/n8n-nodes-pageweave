@@ -1,0 +1,49 @@
+{
+	"name": "PageWeave: import rows from a CSV URL",
+	"nodes": [
+		{
+			"parameters": {},
+			"id": "4d8e6f4b-9e4b-4c9d-a83c-6d9d7f5ba01",
+			"name": "When clicking Test workflow",
+			"type": "n8n-nodes-base.manualTrigger",
+			"typeVersion": 1,
+			"position": [0, 0]
+		},
+		{
+			"parameters": {
+				"resource": "row",
+				"operation": "import",
+				"websiteId": {
+					"__rl": true,
+					"mode": "id",
+					"value": "REPLACE_WITH_WEBSITE_ID"
+				},
+				"tableId": {
+					"__rl": true,
+					"mode": "id",
+					"value": "REPLACE_WITH_TABLE_ID"
+				},
+				"importSource": "url",
+				"sourceUrl": "https://example.com/rows.csv",
+				"importMode": "create",
+				"waitForCompletion": true
+			},
+			"id": "4d8e6f4b-9e4b-4c9d-a83c-6d9d7f5ba02",
+			"name": "Import Rows",
+			"type": "@pageweave/n8n-nodes-pageweave.pageWeave",
+			"typeVersion": 1,
+			"position": [220, 0]
+		}
+	],
+	"pinData": {},
+	"connections": {
+		"When clicking Test workflow": {
+			"main": [[{ "node": "Import Rows", "type": "main", "index": 0 }]]
+		}
+	},
+	"active": false,
+	"settings": { "executionOrder": "v1" },
+	"versionId": "4d8e6f4b-9e4b-4c9d-a83c-6d9d7f5ba03",
+	"meta": { "templateCredsSetupCompleted": false },
+	"tags": []
+}

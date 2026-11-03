@@ -10,18 +10,26 @@ import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import { rethrowAsPageWeaveError } from './shared/errors';
 
-import { searchForms, searchWebsites } from './shared/listSearch';
+import {
+	searchForms,
+	searchTables,
+	searchWebhooks,
+	searchWebsites,
+} from './shared/listSearch';
 import {
 	customApiFields,
 	customApiOperations,
 	executeCustomApi,
 } from './resources/customApi';
 import { executeForm, formFields, formOperations } from './resources/form';
+import { executeRow, rowFields, rowOperations } from './resources/row';
 import {
 	executeSubmission,
 	submissionFields,
 	submissionOperations,
 } from './resources/submission';
+import { executeTable, tableFields, tableOperations } from './resources/table';
+import { executeWebhook, webhookFields, webhookOperations } from './resources/webhook';
 
 const resourceOptions: INodeProperties = {
 	displayName: 'Resource',
@@ -40,9 +48,24 @@ const resourceOptions: INodeProperties = {
 			description: 'Read forms and their field definitions',
 		},
 		{
+			name: 'Row',
+			value: 'row',
+			description: 'Read, write, import, and export table rows',
+		},
+		{
 			name: 'Submission',
 			value: 'submission',
 			description: 'Read and manage form submissions',
+		},
+		{
+			name: 'Table',
+			value: 'table',
+			description: 'Create and manage data tables',
+		},
+		{
+			name: 'Webhook',
+			value: 'webhook',
+			description: 'Manage webhook endpoints and deliveries',
 		},
 	],
 	default: 'submission',
@@ -75,6 +98,12 @@ export class PageWeave implements INodeType {
 			...submissionFields,
 			...formOperations,
 			...formFields,
+			...tableOperations,
+			...tableFields,
+			...rowOperations,
+			...rowFields,
+			...webhookOperations,
+			...webhookFields,
 			...customApiOperations,
 			...customApiFields,
 		],
@@ -83,6 +112,8 @@ export class PageWeave implements INodeType {
 	methods = {
 		listSearch: {
 			searchForms,
+			searchTables,
+			searchWebhooks,
 			searchWebsites,
 		},
 	};
@@ -103,6 +134,15 @@ export class PageWeave implements INodeType {
 						break;
 					case 'form':
 						results = await executeForm(this, operation, itemIndex);
+						break;
+					case 'table':
+						results = await executeTable(this, operation, itemIndex);
+						break;
+					case 'row':
+						results = await executeRow(this, operation, itemIndex);
+						break;
+					case 'webhook':
+						results = await executeWebhook(this, operation, itemIndex);
 						break;
 					case 'customApi':
 						results = await executeCustomApi(this, itemIndex);

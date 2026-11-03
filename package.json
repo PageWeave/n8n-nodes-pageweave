@@ -51,7 +51,8 @@
 			"dist/credentials/PageWeaveApi.credentials.js"
 		],
 		"nodes": [
-			"dist/nodes/PageWeave/PageWeave.node.js"
+			"dist/nodes/PageWeave/PageWeave.node.js",
+			"dist/nodes/PageWeaveTrigger/PageWeaveTrigger.node.js"
 		]
 	},
 	"publishConfig": {

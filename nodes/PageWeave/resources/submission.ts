@@ -2,6 +2,7 @@ import type { IDataObject, IExecuteFunctions, INodeExecutionData, INodePropertie
 import { NodeOperationError } from 'n8n-workflow';
 
 import { listAll } from '../shared/pagination';
+import { formLocator, limitField, returnAllField, websiteLocator } from '../shared/properties';
 import { encodeSegment, resourceLocatorValue } from '../shared/parameters';
 import { pageWeaveRequest } from '../shared/request';
 
@@ -47,69 +48,8 @@ export const submissionOperations: INodeProperties[] = [
 ];
 
 export const submissionFields: INodeProperties[] = [
-	{
-		displayName: 'Website',
-		name: 'websiteId',
-		type: 'resourceLocator',
-		default: { mode: 'list', value: '' },
-		required: true,
-		displayOptions: {
-			show: {
-				resource: ['submission'],
-			},
-		},
-		description: 'The website that owns the form',
-		modes: [
-			{
-				displayName: 'From List',
-				name: 'list',
-				type: 'list',
-				typeOptions: {
-					searchListMethod: 'searchWebsites',
-					searchable: true,
-				},
-			},
-			{
-				displayName: 'ID',
-				name: 'id',
-				type: 'string',
-				placeholder: 'e.g. 019f9c2a-6a1b-7a3d-8f2e-4b6c8d0e1f23',
-			},
-		],
-	},
-	{
-		displayName: 'Form',
-		name: 'formId',
-		type: 'resourceLocator',
-		default: { mode: 'list', value: '' },
-		required: true,
-		displayOptions: {
-			show: {
-				resource: ['submission'],
-			},
-		},
-		typeOptions: {
-			loadOptionsDependsOn: ['websiteId.value'],
-		},
-		description: 'The form whose submissions you want to read',
-		modes: [
-			{
-				displayName: 'From List',
-				name: 'list',
-				type: 'list',
-				typeOptions: {
-					searchListMethod: 'searchForms',
-					searchable: true,
-				},
-			},
-			{
-				displayName: 'ID',
-				name: 'id',
-				type: 'string',
-				placeholder: 'e.g. 019f9c2a-6a1b-7a3d-8f2e-4b6c8d0e1f23',
-			},
-		],
-	},
+	websiteLocator({ resource: ['submission'] }),
+	formLocator({ resource: ['submission'] }),
 	{
 		displayName: 'Submission ID',
 		name: 'submissionId',
@@ -124,36 +64,8 @@ export const submissionFields: INodeProperties[] = [
 		},
 		description: 'The ID of the submission',
 	},
-	{
-		displayName: 'Return All',
-		name: 'returnAll',
-		type: 'boolean',
-		default: false,
-		displayOptions: {
-			show: {
-				resource: ['submission'],
-				operation: ['getAll'],
-			},
-		},
-		description: 'Whether to return all results or only up to a given limit',
-	},
-	{
-		displayName: 'Limit',
-		name: 'limit',
-		type: 'number',
-		default: 50,
-		typeOptions: {
-			minValue: 1,
-		},
-		displayOptions: {
-			show: {
-				resource: ['submission'],
-				operation: ['getAll'],
-				returnAll: [false],
-			},
-		},
-		description: 'Max number of results to return',
-	},
+	returnAllField({ resource: ['submission'], operation: ['getAll'] }),
+	limitField({ resource: ['submission'], operation: ['getAll'] }),
 	{
 		displayName: 'Filters',
 		name: 'filters',

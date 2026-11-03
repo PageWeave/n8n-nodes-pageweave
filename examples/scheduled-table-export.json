@@ -1,0 +1,54 @@
+{
+	"name": "PageWeave: export a table to CSV on a schedule",
+	"nodes": [
+		{
+			"parameters": {
+				"rule": {
+					"interval": [{ "field": "days", "daysInterval": 1 }]
+				}
+			},
+			"id": "2b6c4d2f-7c2f-4a7b-8e1a-4b7b5d3f8b01",
+			"name": "Every Day",
+			"type": "n8n-nodes-base.scheduleTrigger",
+			"typeVersion": 1.2,
+			"position": [0, 0]
+		},
+		{
+			"parameters": {
+				"resource": "row",
+				"operation": "export",
+				"websiteId": {
+					"__rl": true,
+					"mode": "id",
+					"value": "REPLACE_WITH_WEBSITE_ID"
+				},
+				"tableId": {
+					"__rl": true,
+					"mode": "id",
+					"value": "REPLACE_WITH_TABLE_ID"
+				},
+				"exportFilters": {
+					"published": "any",
+					"sanitize": true
+				},
+				"binaryPropertyName": "data"
+			},
+			"id": "2b6c4d2f-7c2f-4a7b-8e1a-4b7b5d3f8b02",
+			"name": "Export Rows",
+			"type": "@pageweave/n8n-nodes-pageweave.pageWeave",
+			"typeVersion": 1,
+			"position": [220, 0]
+		}
+	],
+	"pinData": {},
+	"connections": {
+		"Every Day": {
+			"main": [[{ "node": "Export Rows", "type": "main", "index": 0 }]]
+		}
+	},
+	"active": false,
+	"settings": { "executionOrder": "v1" },
+	"versionId": "2b6c4d2f-7c2f-4a7b-8e1a-4b7b5d3f8b03",
+	"meta": { "templateCredsSetupCompleted": false },
+	"tags": []
+}
