@@ -81,7 +81,7 @@ describe('executeWebhook', () => {
 
 		const [item] = await executeWebhook(context, 'create', 0);
 
-		expect(item.json).toEqual({ id: 'wh-1', active: true });
+		expect(item.json).toEqual({ id: 'wh-1', secret: 'shh', active: true });
 		expect(requests[1].method).toBe('PATCH');
 		expect(requests[1].body).toBe(JSON.stringify({ active: true }));
 	});

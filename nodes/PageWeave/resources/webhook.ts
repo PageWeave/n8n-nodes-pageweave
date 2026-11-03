@@ -348,12 +348,14 @@ export async function executeWebhook(
 			});
 
 			if (context.getNodeParameter('activateImmediately', itemIndex, false) as boolean) {
-				webhook = await pageWeaveRequest<IDataObject>(context, {
+				const activated = await pageWeaveRequest<IDataObject>(context, {
 					method: 'PATCH',
 					path: `${collectionPath}/${encodeSegment(String(webhook.id))}`,
 					body: { active: true },
 					itemIndex,
 				});
+				// The one-time secret comes from create; PATCH must not hide it.
+				webhook = { ...webhook, ...activated };
 			}
 
 			return [{ json: webhook, pairedItem: { item: itemIndex } }];
