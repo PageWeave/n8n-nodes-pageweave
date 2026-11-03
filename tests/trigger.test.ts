@@ -380,3 +380,134 @@ describe('PageWeaveTrigger webhook', () => {
 		expect(result.webhookResponse).toBe('OK');
 	});
 });
+
+describe('PageWeaveTrigger recovery', () => {
+	it('adopts an endpoint that already points at the n8n URL', async () => {
+		const trigger = new PageWeaveTrigger();
+		const { context, requests, state } = createHookContext(
+			{
+				websiteId: { mode: 'id', value: 'site-1' },
+				events: ['form.submission.created'],
+				formIds: '',
+			},
+			[
+				{
+					statusCode: 200,
+					body: {
+						data: [{ id: 'wh-adopt', url: WEBHOOK_URL }],
+						pagination: { limit: 100, has_more: false, next_cursor: null },
+					},
+				},
+				{ statusCode: 200, body: { webhook_id: 'wh-adopt', secret: 'adopted' } },
+				{ statusCode: 200, body: { id: 'wh-adopt', active: true } },
+			],
+		);
+
+		await expect(trigger.webhookMethods.default.create.call(context)).resolves.toBe(true);
+
+		expect(requests[1].url).toContain('/webhooks/wh-adopt/rotate_secret');
+		expect(requests[2].method).toBe('PATCH');
+		expect(state).toMatchObject({
+			webhookId: 'wh-adopt',
+			webhookSecret: 'adopted',
+			webhookUrl: WEBHOOK_URL,
+		});
+	});
+
+	it('deletes a created endpoint when activation fails', async () => {
+		const trigger = new PageWeaveTrigger();
+		const { context, requests, state } = createHookContext(
+			{
+				websiteId: { mode: 'id', value: 'site-1' },
+				events: ['form.submission.created'],
+				formIds: '',
+			},
+			[
+				{
+					statusCode: 200,
+					body: {
+						data: [],
+						pagination: { limit: 100, has_more: false, next_cursor: null },
+					},
+				},
+				{ statusCode: 201, body: { id: 'wh-new', secret: 'secret-new' } },
+				{
+					statusCode: 422,
+					body: { title: 'Validation Error', detail: 'URL is not publicly reachable' },
+				},
+				{ statusCode: 204 },
+			],
+		);
+
+		await expect(trigger.webhookMethods.default.create.call(context)).rejects.toThrow(
+			/Validation Error/,
+		);
+
+		expect(requests[3].method).toBe('DELETE');
+		expect(requests[3].url).toContain('/webhooks/wh-new');
+		expect(state).not.toHaveProperty('webhookId');
+	});
+
+	it('moves the endpoint to a new n8n URL in checkExists', async () => {
+		const trigger = new PageWeaveTrigger();
+		const { context, requests, state } = createHookContext(
+			{
+				websiteId: { mode: 'id', value: 'site-1' },
+				events: ['form.submission.created'],
+				formIds: '',
+			},
+			[
+				{
+					statusCode: 200,
+					body: {
+						id: 'wh-1',
+						url: 'https://old.example.com/webhook/pageweave',
+						active: true,
+						auto_disabled: false,
+						events: ['form.submission.created'],
+						form_ids: [],
+					},
+				},
+				{ statusCode: 200, body: { id: 'wh-1', active: true } },
+			],
+			{
+				webhookId: 'wh-1',
+				webhookSecret: 'secret-1',
+				webhookUrl: 'https://old.example.com/webhook/pageweave',
+			},
+		);
+
+		await expect(trigger.webhookMethods.default.checkExists.call(context)).resolves.toBe(true);
+
+		expect(requests[1].method).toBe('PATCH');
+		expect(requests[1].body).toContain(JSON.stringify(WEBHOOK_URL));
+		expect(state.webhookUrl).toBe(WEBHOOK_URL);
+	});
+});
+
+describe('PageWeaveTrigger cross-slot signature fallback', () => {
+	it('accepts the test secret on a production delivery', async () => {
+		const trigger = new PageWeaveTrigger();
+		const body: IDataObject = {
+			event: 'form.submission.created',
+			timestamp: '2026-11-03T10:00:00Z',
+			data: { submission_id: 'sub-1' },
+		};
+		const rawBody = Buffer.from(JSON.stringify(body));
+		const { context } = createWebhookContext({
+			rawBody,
+			body,
+			headers: {
+				'x-webhook-signature': `sha256=${computeSignature('test-secret', rawBody)}`,
+				'x-webhook-event': 'form.submission.created',
+			},
+			state: { testWebhookSecret: 'test-secret' },
+		});
+
+		const result = await trigger.webhook.call(context);
+
+		expect(result.workflowData?.[0]?.[0]?.json).toMatchObject({
+			event: 'form.submission.created',
+		});
+	});
+});

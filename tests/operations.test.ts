@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { executeCustomApi } from '../nodes/PageWeave/resources/customApi';
 import { executeRow } from '../nodes/PageWeave/resources/row';
 import { executeTable } from '../nodes/PageWeave/resources/table';
 import { executeWebhook } from '../nodes/PageWeave/resources/webhook';
@@ -152,7 +153,7 @@ describe('executeRow', () => {
 
 	it('exports rows as a binary CSV item', async () => {
 		const csv = Buffer.from('id,name\n1,Acme\n');
-		const { context } = createExecuteContext(
+		const { context, requests } = createExecuteContext(
 			{
 				websiteId,
 				tableId,
@@ -175,6 +176,17 @@ describe('executeRow', () => {
 			mimeType: 'text/csv',
 			data: csv.toString('base64'),
 		});
+		expect(requests[0].headers).toMatchObject({ Accept: 'text/csv' });
+	});
+
+	it('rejects an empty Row ID before calling PageWeave', async () => {
+		const { context, requests } = createExecuteContext(
+			{ websiteId, tableId, rowId: '   ' },
+			[],
+		);
+
+		await expect(executeRow(context, 'get', 0)).rejects.toThrow(/Row ID is required/);
+		expect(requests).toHaveLength(0);
 	});
 
 	it('returns the async import run when Wait for Completion is off', async () => {
@@ -221,5 +233,81 @@ describe('executeTable', () => {
 				fields_schema: { fields: [{ name: 'email', type: 'string' }] },
 			}),
 		);
+	});
+});
+
+describe('executeCustomApi', () => {
+	it('forwards a relative path, query parameters, and headers', async () => {
+		const { context, requests } = createExecuteContext(
+			{
+				method: 'GET',
+				path: '/api/v1/websites',
+				query: { limit: 2 },
+				headers: { 'X-Test': 'yes' },
+				responseFormat: 'json',
+			},
+			[{ statusCode: 200, body: [{ id: '1' }, { id: '2' }] }],
+		);
+
+		const items = await executeCustomApi(context, 0);
+
+		expect(items.map((item) => item.json)).toEqual([{ id: '1' }, { id: '2' }]);
+		expect(requests[0]).toMatchObject({ method: 'GET', qs: { limit: 2 } });
+		expect(requests[0].headers).toMatchObject({ 'X-Test': 'yes' });
+	});
+
+	it('rejects an absolute URL', async () => {
+		const { context, requests } = createExecuteContext(
+			{
+				method: 'GET',
+				path: 'https://evil.example/api/v1/websites',
+				query: {},
+				headers: {},
+				responseFormat: 'json',
+			},
+			[],
+		);
+
+		await expect(executeCustomApi(context, 0)).rejects.toThrow(/must start with \/api\/v1\//);
+		expect(requests).toHaveLength(0);
+	});
+
+	it('blocks overriding the Authorization header', async () => {
+		const { context, requests } = createExecuteContext(
+			{
+				method: 'GET',
+				path: '/api/v1/me',
+				query: {},
+				headers: { Authorization: 'Bearer stolen' },
+				responseFormat: 'json',
+			},
+			[],
+		);
+
+		await expect(executeCustomApi(context, 0)).rejects.toThrow(/cannot be set/);
+		expect(requests).toHaveLength(0);
+	});
+
+	it('adds an idempotency key on POST and returns text', async () => {
+		const { context, requests } = createExecuteContext(
+			{
+				method: 'POST',
+				path: '/api/v1/websites/site-1/tables',
+				query: {},
+				body: { name: 'Leads' },
+				headers: {},
+				responseFormat: 'text',
+			},
+			[{ statusCode: 201, body: 'created' }],
+		);
+
+		const items = await executeCustomApi(context, 0);
+
+		expect(items[0].json).toEqual({ data: 'created' });
+		expect(requests[0].headers).toMatchObject({
+			'Idempotency-Key': expect.stringContaining('n8n-exec-1-node-1-0-'),
+			'Content-Type': 'application/json',
+		});
+		expect(requests[0].encoding).toBe('text');
 	});
 });
