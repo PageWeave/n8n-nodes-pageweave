@@ -355,6 +355,14 @@ function requireTable(context: IExecuteFunctions, itemIndex: number): string {
 	return tableId;
 }
 
+function requireRowId(context: IExecuteFunctions, itemIndex: number): string {
+	const rowId = (context.getNodeParameter('rowId', itemIndex, '') as string).trim();
+	if (!rowId) {
+		throw new NodeOperationError(context.getNode(), 'Row ID is required.', { itemIndex });
+	}
+	return rowId;
+}
+
 function buildRowQuery(context: IExecuteFunctions, itemIndex: number, fields: IDataObject): IDataObject {
 	const qs: IDataObject = {};
 
@@ -454,7 +462,7 @@ export async function executeRow(
 		}
 
 		case 'get': {
-			const rowId = context.getNodeParameter('rowId', itemIndex, '') as string;
+			const rowId = requireRowId(context, itemIndex);
 			const row = await pageWeaveRequest<IDataObject>(context, {
 				method: 'GET',
 				path: `${collectionPath}/${encodeSegment(rowId)}`,
@@ -486,7 +494,7 @@ export async function executeRow(
 		}
 
 		case 'update': {
-			const rowId = context.getNodeParameter('rowId', itemIndex, '') as string;
+			const rowId = requireRowId(context, itemIndex);
 			const body: IDataObject = {};
 			const data = parseJsonObject(
 				context.getNode(),
@@ -522,7 +530,7 @@ export async function executeRow(
 		}
 
 		case 'delete': {
-			const rowId = context.getNodeParameter('rowId', itemIndex, '') as string;
+			const rowId = requireRowId(context, itemIndex);
 			await pageWeaveRequest(context, {
 				method: 'DELETE',
 				path: `${collectionPath}/${encodeSegment(rowId)}`,
