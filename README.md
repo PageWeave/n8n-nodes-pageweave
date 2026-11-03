@@ -12,7 +12,7 @@ Use this package to:
 
 ## Requirements
 
-- n8n 2.x, self-hosted or n8n Cloud
+- n8n 2.x, self-hosted (n8n Cloud once the package is listed as a verified community node)
 - A PageWeave account with an API key
 - For the trigger: n8n reachable at a **public HTTPS URL** (PageWeave rejects localhost and private addresses)
 
@@ -20,7 +20,7 @@ Use this package to:
 
 ### n8n Cloud
 
-Install **PageWeave** from the nodes panel. Verified community nodes install on n8n Cloud without extra configuration.
+n8n Cloud installs verified community nodes. Once the package is listed, install **PageWeave** from the nodes panel.
 
 ### Self-hosted n8n
 
@@ -36,7 +36,7 @@ npm install @pageweave/n8n-nodes-pageweave
 
 ## Credentials
 
-1. In PageWeave, open **Settings → API keys** and create a key scoped to the website the workflow reads or writes.
+1. In PageWeave, open **Settings → API keys** and create a key. Choose read or read and write access; a read-only key cannot create, update, or delete records.
 2. In n8n, create a **PageWeave API** credential and paste the key.
 3. Leave **Base URL** at `https://pageweave.dev` unless PageWeave support gave you another address.
 4. Select **Test**. The credential calls `GET /api/v1/me`.

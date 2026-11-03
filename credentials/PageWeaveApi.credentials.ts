@@ -35,7 +35,7 @@ export class PageWeaveApi implements ICredentialType {
 			default: '',
 			required: true,
 			description:
-				'A PageWeave API key. Create one under Settings → API keys, scoped to the website this workflow reads or writes.',
+				'A PageWeave API key. Create one under Settings → API keys with read or read and write access.',
 		},
 	];
 
