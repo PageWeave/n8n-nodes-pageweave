@@ -1,0 +1,71 @@
+{
+	"name": "@pageweave/n8n-nodes-pageweave",
+	"version": "0.0.1",
+	"description": "PageWeave nodes for n8n: form submissions, forms, tables, rows, and webhooks",
+	"license": "MIT",
+	"homepage": "https://pageweave.dev/docs/n8n",
+	"keywords": [
+		"n8n-community-node-package",
+		"pageweave",
+		"forms",
+		"form submissions",
+		"webhooks",
+		"cms"
+	],
+	"author": {
+		"name": "PageWeave",
+		"email": "tobias@pageweave.dev",
+		"url": "https://pageweave.dev"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/PageWeave/n8n-nodes-pageweave.git"
+	},
+	"bugs": {
+		"url": "https://github.com/PageWeave/n8n-nodes-pageweave/issues"
+	},
+	"engines": {
+		"node": ">=22.14"
+	},
+	"scripts": {
+		"build": "n8n-node build",
+		"build:watch": "tsc --watch",
+		"dev": "n8n-node dev",
+		"lint": "n8n-node lint",
+		"lint:fix": "n8n-node lint --fix",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"contract:check": "node scripts/check-contract.mjs",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
+	},
+	"files": [
+		"dist",
+		"!dist/tsconfig.tsbuildinfo"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"credentials": [
+			"dist/credentials/PageWeaveApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/PageWeave/PageWeave.node.js"
+		]
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"devDependencies": {
+		"@n8n/node-cli": "*",
+		"eslint": "9.32.0",
+		"prettier": "3.6.2",
+		"release-it": "^21.1.0",
+		"typescript": "5.9.2",
+		"vitest": "^3.2.4"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
+}
