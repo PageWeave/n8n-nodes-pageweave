@@ -1,8 +1,16 @@
 # Changelog
 
+## 0.1.0
+
+First public release. Documentation: https://pageweave.dev/docs/n8n
+
+- API key help now reflects user-level read/write scopes instead of website scoping
+- n8n Cloud availability documented as dependent on verification
+- Same node surface as 0.0.1
+
 ## 0.0.1
 
-First release. Validates npm trusted publishing and provenance.
+Validates npm trusted publishing and provenance.
 
 - `PageWeave API` credential with a live credential test against `GET /api/v1/me`
 - `PageWeave` action node

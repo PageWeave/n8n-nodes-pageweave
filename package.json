@@ -1,6 +1,6 @@
 {
 	"name": "@pageweave/n8n-nodes-pageweave",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "PageWeave nodes for n8n: form submissions, forms, tables, rows, and webhooks",
 	"license": "MIT",
 	"homepage": "https://pageweave.dev/docs/n8n",
