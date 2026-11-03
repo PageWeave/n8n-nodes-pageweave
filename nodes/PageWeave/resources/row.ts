@@ -566,9 +566,16 @@ export async function executeRow(
 
 			if (response.async === true && context.getNodeParameter('waitForCompletion', itemIndex, true)) {
 				const run = response.import as IDataObject | undefined;
+				if (!run?.id) {
+					throw new NodeOperationError(
+						context.getNode(),
+						'PageWeave accepted the import but did not return an import run ID.',
+						{ itemIndex },
+					);
+				}
 				const importPath = `/api/v1/websites/${encodeSegment(websiteId)}/tables/${encodeSegment(
 					tableId,
-				)}/row_imports/${encodeSegment(String(run?.id ?? ''))}`;
+				)}/row_imports/${encodeSegment(String(run.id))}`;
 				const finished = await waitForImport(context, importPath, itemIndex);
 				return [{ json: finished, pairedItem: { item: itemIndex } }];
 			}

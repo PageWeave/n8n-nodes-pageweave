@@ -300,7 +300,11 @@ export async function pageWeaveDownload(
 	context: PageWeaveContext,
 	options: PageWeaveRequestOptions,
 ): Promise<PageWeaveDownload> {
-	const response = await sendRequest(context, { ...options, encoding: 'arraybuffer' });
+	const response = await sendRequest(context, {
+		...options,
+		encoding: 'arraybuffer',
+		headers: { Accept: 'text/csv', ...options.headers },
+	});
 	const body = response.body;
 
 	const data = Buffer.isBuffer(body)
