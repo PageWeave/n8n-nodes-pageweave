@@ -122,7 +122,7 @@ PageWeave enforces per-credential limits:
 | Write | 120 requests/minute |
 | CSV export | 10 requests/minute |
 
-The node retries `429`, `503`, and concurrent idempotency `409` responses using `Retry-After`. POST requests carry an automatic `Idempotency-Key`, so an n8n retry does not create a duplicate record.
+The node retries `429`, `503`, and concurrent idempotency `409` responses using `Retry-After`. POST requests carry an automatic `Idempotency-Key` derived from the execution, node, item, and body, so **Retry On Fail** within the same execution does not create a duplicate record. Retrying the whole execution starts a new execution ID and therefore a new key.
 
 ## Errors
 

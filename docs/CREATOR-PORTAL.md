@@ -37,10 +37,11 @@ Keep the recording to the product surfaces. Do not show API keys or personal dat
 
 ## Release checklist
 
-1. Trusted publisher configured: GitHub Actions, `PageWeave/n8n-nodes-pageweave`, workflow `publish.yml`, `npm publish` allowed.
-2. Tag `vX.Y.Z`; `publish.yml` runs lint, tests, build, then `npm publish --provenance --access public`.
-3. Verify npm shows the provenance badge and the SLSA attestation.
-4. Run `npx @n8n/scan-community-package @pageweave/n8n-nodes-pageweave@X.Y.Z`; it must exit 0.
-5. After the first successful publish: npm package settings → Publishing access → require 2FA and disallow tokens.
-6. Submit the package in the Creator Portal with the demo video and documentation URL.
-7. Address review findings in a new patch release; never move a published tag.
+1. Deploy the PageWeave docs page at `/docs/n8n` first. The npm homepage, both codex files, the credential help link, and the Creator Portal notes all point at it.
+2. Trusted publisher configured: GitHub Actions, `PageWeave/n8n-nodes-pageweave`, workflow `publish.yml`, `npm publish` allowed.
+3. Tag `vX.Y.Z`; `publish.yml` runs lint, tests, build, then `npm publish --provenance --access public`.
+4. Verify npm shows the provenance badge and the SLSA attestation.
+5. Run `npx @n8n/scan-community-package @pageweave/n8n-nodes-pageweave@X.Y.Z`; it must exit 0.
+6. After the first successful publish: npm package settings → Publishing access → require 2FA and disallow tokens.
+7. Submit the package in the Creator Portal with the demo video and documentation URL.
+8. Address review findings in a new patch release; never move a published tag.
