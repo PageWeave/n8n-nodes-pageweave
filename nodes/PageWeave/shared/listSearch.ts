@@ -1,8 +1,7 @@
 import type { IDataObject, ILoadOptionsFunctions, INodeListSearchResult } from 'n8n-workflow';
 
+import { listAll } from './pagination';
 import { resourceLocatorValue } from './parameters';
-import type { PageWeaveCollection } from './request';
-import { pageWeaveRequest } from './request';
 
 interface WebsiteSummary {
 	id: string;
@@ -37,18 +36,16 @@ export async function searchWebsites(
 	this: ILoadOptionsFunctions,
 	filter?: string,
 ): Promise<INodeListSearchResult> {
-	const qs: IDataObject = { limit: 100 };
 	const search = (filter ?? '').trim();
-	if (search) qs.q = search;
+	const qs: IDataObject = search ? { q: search } : {};
 
-	const page = await pageWeaveRequest<PageWeaveCollection<WebsiteSummary>>(this, {
-		method: 'GET',
-		path: '/api/v1/websites',
+	const websites = await listAll<WebsiteSummary>(this, '/api/v1/websites', {
 		qs,
+		returnAll: true,
 	});
 
 	return {
-		results: (page.data ?? []).map((website) => {
+		results: websites.map((website) => {
 			const suffix = website.suspended ? ' (suspended)' : '';
 			return {
 				name: `${website.subdomain}${suffix}`,
@@ -67,22 +64,21 @@ export async function searchForms(
 	const websiteId = resourceLocatorValue(this.getCurrentNodeParameter('websiteId'));
 	if (!websiteId) return { results: [] };
 
-	const page = await pageWeaveRequest<PageWeaveCollection<FormSummary>>(this, {
-		method: 'GET',
-		path: `/api/v1/websites/${encodeURIComponent(websiteId)}/forms`,
-		qs: { limit: 100 },
-	});
-
-	const search = (filter ?? '').trim().toLowerCase();
-	const forms = (page.data ?? []).filter(
-		(form) => !search || form.name.toLowerCase().includes(search),
+	const forms = await listAll<FormSummary>(
+		this,
+		`/api/v1/websites/${encodeURIComponent(websiteId)}/forms`,
+		{ returnAll: true },
 	);
 
+	const search = (filter ?? '').trim().toLowerCase();
+	const matches = forms.filter((form) => !search || form.name.toLowerCase().includes(search));
+
 	return {
-		results: forms.map((form) => ({
+		results: matches.map((form) => ({
 			name: form.name,
 			value: form.id,
 			url: form.submit_url,
+			description: form.submit_url,
 		})),
 	};
 }
@@ -94,14 +90,14 @@ export async function searchTables(
 	const websiteId = resourceLocatorValue(this.getCurrentNodeParameter('websiteId'));
 	if (!websiteId) return { results: [] };
 
-	const page = await pageWeaveRequest<PageWeaveCollection<TableSummary>>(this, {
-		method: 'GET',
-		path: `/api/v1/websites/${encodeURIComponent(websiteId)}/tables`,
-		qs: { limit: 100 },
-	});
+	const tables = await listAll<TableSummary>(
+		this,
+		`/api/v1/websites/${encodeURIComponent(websiteId)}/tables`,
+		{ returnAll: true },
+	);
 
 	const search = (filter ?? '').trim().toLowerCase();
-	const tables = (page.data ?? []).filter(
+	const matches = tables.filter(
 		(table) =>
 			!search ||
 			table.name.toLowerCase().includes(search) ||
@@ -109,12 +105,15 @@ export async function searchTables(
 	);
 
 	return {
-		results: tables.map((table) => ({
-			name: table.name,
-			value: table.id,
-			description:
-				typeof table.row_count === 'number' ? `${table.row_count} rows` : undefined,
-		})),
+		results: matches.map((table) => {
+			const rowCount =
+				typeof table.row_count === 'number' ? `${table.row_count} rows` : undefined;
+			return {
+				name: table.name,
+				value: table.id,
+				description: rowCount ? `${rowCount} · slug: ${table.slug}` : `Slug: ${table.slug}`,
+			};
+		}),
 	};
 }
 
@@ -125,19 +124,19 @@ export async function searchWebhooks(
 	const websiteId = resourceLocatorValue(this.getCurrentNodeParameter('websiteId'));
 	if (!websiteId) return { results: [] };
 
-	const page = await pageWeaveRequest<PageWeaveCollection<WebhookSummary>>(this, {
-		method: 'GET',
-		path: `/api/v1/websites/${encodeURIComponent(websiteId)}/webhooks`,
-		qs: { limit: 100 },
-	});
+	const webhooks = await listAll<WebhookSummary>(
+		this,
+		`/api/v1/websites/${encodeURIComponent(websiteId)}/webhooks`,
+		{ returnAll: true },
+	);
 
 	const search = (filter ?? '').trim().toLowerCase();
-	const webhooks = (page.data ?? []).filter(
+	const matches = webhooks.filter(
 		(webhook) => !search || webhook.url.toLowerCase().includes(search),
 	);
 
 	return {
-		results: webhooks.map((webhook) => ({
+		results: matches.map((webhook) => ({
 			name: webhook.url,
 			value: webhook.id,
 			description: webhook.auto_disabled
