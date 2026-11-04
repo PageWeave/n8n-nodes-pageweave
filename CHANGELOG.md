@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1
+
+Fixes the PageWeave Trigger Website picker.
+
+- Register `searchWebsites` on the trigger node. Selecting a website from the
+  list no longer fails with "no listSearch method named searchWebsites".
+- Add a description test that fails when a resource locator names a
+  `listSearch` method the node does not declare.
+
 ## 0.1.0
 
 First public release. Documentation: https://pageweave.dev/docs/n8n

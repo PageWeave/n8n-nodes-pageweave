@@ -9,6 +9,7 @@ import type {
 } from 'n8n-workflow';
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
+import { searchWebsites } from '../PageWeave/shared/listSearch';
 import { listAll } from '../PageWeave/shared/pagination';
 import { encodeSegment, resourceLocatorValue } from '../PageWeave/shared/parameters';
 import { rethrowAsPageWeaveError } from '../PageWeave/shared/errors';
@@ -262,6 +263,12 @@ export class PageWeaveTrigger implements INodeType {
 					'Comma-separated form IDs. Leave empty to receive submissions from every form.',
 			},
 		],
+	};
+
+	methods = {
+		listSearch: {
+			searchWebsites,
+		},
 	};
 
 	webhookMethods = {
