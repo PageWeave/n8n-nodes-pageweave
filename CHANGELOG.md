@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0
+
+Adds the `Simplify` option to read operations.
+
+- Submission, Table, and Webhook **Get** and **Get Many** return a compact
+  shape when **Simplify** is on. It is off by default, so existing workflows
+  keep the raw API response.
+- The simplified shapes keep identifiers and the fields workflows branch on;
+  raw output still exposes every field, including uploads and spam signals.
+
 ## 0.1.2
 
 Fixes webhook re-registration after a workflow is deactivated.

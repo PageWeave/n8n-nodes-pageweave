@@ -18,6 +18,7 @@ Internal notes for the n8n Creator Portal. Not part of the npm package.
 ## Reviewer notes
 
 - The action node covers submissions, forms, tables, rows, webhooks, and a Custom API Call escape hatch.
+- Read operations expose **Simplify** for the wider submission, table, and webhook shapes. It is off by default; raw output remains available.
 - The trigger registers a PageWeave webhook at the n8n URL, verifies `X-Webhook-Signature` over the raw body, and deletes the endpoint on deactivation.
 - PageWeave delivers to public HTTPS only. n8n Cloud works out of the box; self-hosted reviewers need a public hostname or tunnel for the trigger.
 - A free PageWeave account can create the API key needed for both nodes. The credential test calls `GET /api/v1/me`.

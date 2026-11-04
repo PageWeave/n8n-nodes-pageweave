@@ -12,9 +12,11 @@ import {
 	EVENT_OPTIONS,
 	limitField,
 	returnAllField,
+	simplifyField,
 	websiteLocator,
 	webhookLocator,
 } from '../shared/properties';
+import { simplifyWebhook } from '../shared/simplify';
 import { makeIdempotencyKey, pageWeaveRequest } from '../shared/request';
 import { validateWebhookUrl } from '../shared/webhookUrl';
 
@@ -212,6 +214,7 @@ export const webhookFields: INodeProperties[] = [
 		resource: ['webhook'],
 		operation: ['getAll', 'getAllDeliveries'],
 	}),
+	simplifyField({ resource: ['webhook'], operation: ['get', 'getAll'] }),
 	{
 		displayName: 'Filters',
 		name: 'deliveryFilters',
@@ -307,7 +310,13 @@ export async function executeWebhook(
 				limit,
 				itemIndex,
 			});
-			return webhooks.map((webhook) => ({ json: webhook, pairedItem: { item: itemIndex } }));
+			return webhooks.map((webhook) => ({
+				json:
+					context.getNodeParameter('simplify', itemIndex, false) === true
+						? simplifyWebhook(webhook)
+						: webhook,
+				pairedItem: { item: itemIndex },
+			}));
 		}
 
 		case 'get': {
@@ -317,7 +326,15 @@ export async function executeWebhook(
 				path: `${collectionPath}/${encodeSegment(webhookId)}`,
 				itemIndex,
 			});
-			return [{ json: webhook, pairedItem: { item: itemIndex } }];
+			return [
+				{
+					json:
+						context.getNodeParameter('simplify', itemIndex, false) === true
+							? simplifyWebhook(webhook)
+							: webhook,
+					pairedItem: { item: itemIndex },
+				},
+			];
 		}
 
 		case 'create': {

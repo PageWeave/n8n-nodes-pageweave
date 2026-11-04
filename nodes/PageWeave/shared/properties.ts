@@ -158,6 +158,17 @@ export function limitField(show: Show): INodeProperties {
 	};
 }
 
+export function simplifyField(show: Show): INodeProperties {
+	return {
+		displayName: 'Simplify',
+		name: 'simplify',
+		type: 'boolean',
+		default: false,
+		displayOptions: { show },
+		description: 'Whether to return a simplified version of the response instead of the raw data',
+	};
+}
+
 export const EVENT_OPTIONS = [
 	{
 		name: 'Form Submission Created',

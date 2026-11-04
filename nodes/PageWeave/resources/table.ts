@@ -6,9 +6,11 @@ import { encodeSegment, parseJsonObject, resourceLocatorValue } from '../shared/
 import {
 	limitField,
 	returnAllField,
+	simplifyField,
 	tableLocator,
 	websiteLocator,
 } from '../shared/properties';
+import { simplifyTable } from '../shared/simplify';
 import { makeIdempotencyKey, pageWeaveRequest } from '../shared/request';
 
 const RESOURCE = { resource: ['table'] };
@@ -137,6 +139,7 @@ export const tableFields: INodeProperties[] = [
 	},
 	returnAllField({ ...RESOURCE, operation: ['getAll'] }),
 	limitField({ ...RESOURCE, operation: ['getAll'] }),
+	simplifyField({ ...RESOURCE, operation: ['get', 'getAll'] }),
 ];
 
 function requireWebsite(context: IExecuteFunctions, itemIndex: number): string {
@@ -174,7 +177,13 @@ export async function executeTable(
 				limit,
 				itemIndex,
 			});
-			return tables.map((table) => ({ json: table, pairedItem: { item: itemIndex } }));
+			return tables.map((table) => ({
+				json:
+					context.getNodeParameter('simplify', itemIndex, false) === true
+						? simplifyTable(table)
+						: table,
+				pairedItem: { item: itemIndex },
+			}));
 		}
 
 		case 'get': {
@@ -184,7 +193,15 @@ export async function executeTable(
 				path: `${collectionPath}/${encodeSegment(tableId)}`,
 				itemIndex,
 			});
-			return [{ json: table, pairedItem: { item: itemIndex } }];
+			return [
+				{
+					json:
+						context.getNodeParameter('simplify', itemIndex, false) === true
+							? simplifyTable(table)
+							: table,
+					pairedItem: { item: itemIndex },
+				},
+			];
 		}
 
 		case 'create': {

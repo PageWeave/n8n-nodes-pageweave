@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { executeCustomApi } from '../nodes/PageWeave/resources/customApi';
 import { executeRow } from '../nodes/PageWeave/resources/row';
+import { executeSubmission } from '../nodes/PageWeave/resources/submission';
 import { executeTable } from '../nodes/PageWeave/resources/table';
 import { executeWebhook } from '../nodes/PageWeave/resources/webhook';
 import { isPrivateHost, validateWebhookUrl } from '../nodes/PageWeave/shared/webhookUrl';
@@ -9,6 +10,132 @@ import { createExecuteContext } from './helpers';
 
 const websiteId = { mode: 'id', value: 'site-1' };
 const tableId = { mode: 'id', value: 'table-1' };
+
+describe('simplify output', () => {
+	const detail = {
+		id: 'row-1',
+		form_id: 'form-1',
+		form_version_id: 'fv-1',
+		read: false,
+		spam_verdict: 'ham',
+		spam_score: 0,
+		spam_overridden: false,
+		data: { name: 'Ada' },
+		spam_signals: {},
+		failure_details: null,
+		uploads: [],
+		created_at: '2026-11-04T09:00:00Z',
+		updated_at: '2026-11-04T09:00:00Z',
+	};
+
+	it('simplifies a submission detail', async () => {
+		const { context } = createExecuteContext(
+			{
+				websiteId,
+				formId: { mode: 'id', value: 'form-1' },
+				submissionId: 'sub-1',
+				simplify: true,
+			},
+			[{ statusCode: 200, body: detail }],
+		);
+
+		const [item] = await executeSubmission(context, 'get', 0);
+
+		expect(item.json).toEqual({
+			id: 'row-1',
+			form_id: 'form-1',
+			read: false,
+			spam_verdict: 'ham',
+			data: { name: 'Ada' },
+			uploads: [],
+			created_at: '2026-11-04T09:00:00Z',
+		});
+	});
+
+	it('keeps the raw submission when simplify is off', async () => {
+		const { context } = createExecuteContext(
+			{
+				websiteId,
+				formId: { mode: 'id', value: 'form-1' },
+				submissionId: 'sub-1',
+				simplify: false,
+			},
+			[{ statusCode: 200, body: detail }],
+		);
+
+		const [item] = await executeSubmission(context, 'get', 0);
+
+		expect(item.json).toEqual(detail);
+	});
+
+	it('simplifies a table detail', async () => {
+		const { context } = createExecuteContext(
+			{ websiteId, tableId, simplify: true },
+			[
+				{
+					statusCode: 200,
+					body: {
+						id: 'table-1',
+						name: 'Leads',
+						slug: 'leads',
+						row_count: 3,
+						fields_schema: { fields: [{ name: 'email', type: 'string' }] },
+						template_page: { id: 'page-1', path: '/leads' },
+						created_at: '2026-11-04T09:00:00Z',
+						updated_at: '2026-11-04T09:00:00Z',
+					},
+				},
+			],
+		);
+
+		const [item] = await executeTable(context, 'get', 0);
+
+		expect(item.json).toEqual({
+			id: 'table-1',
+			name: 'Leads',
+			slug: 'leads',
+			row_count: 3,
+			template_page: { id: 'page-1', path: '/leads' },
+			created_at: '2026-11-04T09:00:00Z',
+		});
+	});
+
+	it('simplifies a webhook detail', async () => {
+		const { context } = createExecuteContext(
+			{ websiteId, webhookId: { mode: 'id', value: 'wh-1' }, simplify: true },
+			[
+				{
+					statusCode: 200,
+					body: {
+						id: 'wh-1',
+						url: 'https://hooks.example.com/pageweave',
+						events: ['form.submission.created'],
+						form_ids: [],
+						active: true,
+						auto_disabled: false,
+						disable_reason: null,
+						last_delivery: { state: 'success', success: true },
+						created_at: '2026-11-04T09:00:00Z',
+						updated_at: '2026-11-04T09:00:00Z',
+					},
+				},
+			],
+		);
+
+		const [item] = await executeWebhook(context, 'get', 0);
+
+		expect(item.json).toEqual({
+			id: 'wh-1',
+			url: 'https://hooks.example.com/pageweave',
+			events: ['form.submission.created'],
+			form_ids: [],
+			active: true,
+			auto_disabled: false,
+			last_delivery: { state: 'success', success: true },
+			created_at: '2026-11-04T09:00:00Z',
+		});
+	});
+});
 
 describe('validateWebhookUrl', () => {
 	it('accepts a public HTTPS URL', () => {

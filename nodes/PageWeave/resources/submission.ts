@@ -2,7 +2,8 @@ import type { IDataObject, IExecuteFunctions, INodeExecutionData, INodePropertie
 import { NodeOperationError } from 'n8n-workflow';
 
 import { listAll } from '../shared/pagination';
-import { formLocator, limitField, returnAllField, websiteLocator } from '../shared/properties';
+import { formLocator, limitField, returnAllField, simplifyField, websiteLocator } from '../shared/properties';
+import { simplifySubmission } from '../shared/simplify';
 import { encodeSegment, resourceLocatorValue } from '../shared/parameters';
 import { pageWeaveRequest } from '../shared/request';
 
@@ -66,6 +67,7 @@ export const submissionFields: INodeProperties[] = [
 	},
 	returnAllField({ resource: ['submission'], operation: ['getAll'] }),
 	limitField({ resource: ['submission'], operation: ['getAll'] }),
+	simplifyField({ resource: ['submission'], operation: ['get', 'getAll'] }),
 	{
 		displayName: 'Filters',
 		name: 'filters',
@@ -193,7 +195,10 @@ export async function executeSubmission(
 			});
 
 			return submissions.map((submission) => ({
-				json: submission,
+				json:
+					context.getNodeParameter('simplify', itemIndex, false) === true
+						? simplifySubmission(submission)
+						: submission,
 				pairedItem: { item: itemIndex },
 			}));
 		}
@@ -205,7 +210,15 @@ export async function executeSubmission(
 				path: `${collectionPath}/${encodeSegment(submissionId)}`,
 				itemIndex,
 			});
-			return [{ json: submission, pairedItem: { item: itemIndex } }];
+			return [
+				{
+					json:
+						context.getNodeParameter('simplify', itemIndex, false) === true
+							? simplifySubmission(submission)
+							: submission,
+					pairedItem: { item: itemIndex },
+				},
+			];
 		}
 
 		case 'update': {

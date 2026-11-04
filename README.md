@@ -102,6 +102,7 @@ Discarded spam is never dispatched. Quarantined spam is delivered with `spam.ver
 Highlights:
 
 - **Submissions** carry filters for spam verdict and read state. Detail includes uploads and spam signals. Responses are `Cache-Control: no-store` because they contain personal data.
+- **Simplify** trims submission, table, and webhook reads to the fields workflows usually branch on; turn it off for the raw API response.
 - **Rows** accept JSON `data`, publish state (`Draft`, `Publish Now`, `Schedule`), filters, search, sort, and a `published` filter.
 - **Row import** accepts a public HTTPS CSV URL or inline CSV content, `create` or `create or update` mode, and a column mapping. Up to 25,000 rows run synchronously; larger URL imports return a run that the node can poll to completion.
 - **Row export** streams a CSV file into the binary field of your choice. Formula escaping is on unless you turn it off.
