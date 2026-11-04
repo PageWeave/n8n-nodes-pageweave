@@ -124,6 +124,49 @@ describe('PageWeaveTrigger lifecycle', () => {
 		});
 	});
 
+	it('uses a fresh create idempotency key after the endpoint is deleted', async () => {
+		const trigger = new PageWeaveTrigger();
+		const { context, requests, state } = createHookContext(
+			{
+				websiteId: { mode: 'id', value: 'site-1' },
+				events: ['form.submission.created'],
+				formIds: '',
+			},
+			[
+				{
+					statusCode: 200,
+					body: {
+						data: [],
+						pagination: { limit: 100, has_more: false, next_cursor: null },
+					},
+				},
+				{ statusCode: 201, body: { id: 'wh-1', secret: 'secret-1' } },
+				{ statusCode: 200, body: { id: 'wh-1', active: true } },
+				{ statusCode: 204 },
+				{
+					statusCode: 200,
+					body: {
+						data: [],
+						pagination: { limit: 100, has_more: false, next_cursor: null },
+					},
+				},
+				{ statusCode: 201, body: { id: 'wh-2', secret: 'secret-2' } },
+				{ statusCode: 200, body: { id: 'wh-2', active: true } },
+			],
+		);
+
+		await trigger.webhookMethods.default.create.call(context);
+		await trigger.webhookMethods.default.delete.call(context);
+		await trigger.webhookMethods.default.create.call(context);
+
+		const posts = requests.filter((request) => request.method === 'POST');
+		expect(posts).toHaveLength(2);
+		expect((posts[0].headers as Record<string, string>)['Idempotency-Key']).not.toBe(
+			(posts[1].headers as Record<string, string>)['Idempotency-Key'],
+		);
+		expect(state).toMatchObject({ webhookId: 'wh-2', webhookSecret: 'secret-2' });
+	});
+
 	it('reuses the stored endpoint and rotates its secret', async () => {
 		const trigger = new PageWeaveTrigger();
 		const { context, requests } = createHookContext(

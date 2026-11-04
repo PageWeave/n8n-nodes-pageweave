@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type {
 	IDataObject,
 	IHookFunctions,
@@ -152,6 +152,26 @@ function idempotencyKey(context: IHookFunctions, payload: unknown): string {
 	return `n8n-${workflowId}-${node.id ?? node.name}-${hash}`.slice(0, 255);
 }
 
+// PageWeave replays a POST response for 24 hours when the Idempotency-Key
+// repeats. Without a per-lifecycle nonce, deactivating and reactivating a
+// workflow reuses the create key and PageWeave replays the ID of the endpoint
+// that deactivation already deleted, so the follow-up PATCH 404s.
+const CREATE_NONCE_FIELD = 'createWebhookNonce';
+
+function createNonce(context: IHookFunctions): string {
+	const staticData = context.getWorkflowStaticData('node');
+	const stored = staticData[CREATE_NONCE_FIELD];
+	if (typeof stored === 'string' && stored) return stored;
+
+	const nonce = randomUUID();
+	staticData[CREATE_NONCE_FIELD] = nonce;
+	return nonce;
+}
+
+function clearCreateNonce(context: IHookFunctions): void {
+	delete context.getWorkflowStaticData('node')[CREATE_NONCE_FIELD];
+}
+
 async function rotateSecret(
 	context: IHookFunctions,
 	websiteId: string,
@@ -160,7 +180,11 @@ async function rotateSecret(
 	const rotated = await pageWeaveRequest<{ secret?: string }>(context, {
 		method: 'POST',
 		path: `${webhooksPath(websiteId)}/${encodeSegment(webhookId)}/rotate_secret`,
-		idempotencyKey: idempotencyKey(context, { action: 'rotate_secret', webhookId }),
+		idempotencyKey: idempotencyKey(context, {
+			action: 'rotate_secret',
+			webhookId,
+			nonce: randomUUID(),
+		}),
 	});
 
 	if (!rotated?.secret) {
@@ -350,6 +374,7 @@ export class PageWeaveTrigger implements INodeType {
 						const secret = await rotateSecret(this, websiteId, state.id);
 						await syncEndpoint(this, websiteId, state.id, config, true);
 						writeState(staticData, slot, { id: state.id, secret, ...config });
+						clearCreateNonce(this);
 						return true;
 					} catch (error) {
 						if (!isNotFound(error)) {
@@ -366,6 +391,7 @@ export class PageWeaveTrigger implements INodeType {
 					const secret = await rotateSecret(this, websiteId, existingId);
 					await syncEndpoint(this, websiteId, existingId, config, false);
 					writeState(staticData, slot, { id: existingId, secret, ...config });
+					clearCreateNonce(this);
 					return true;
 				}
 
@@ -376,7 +402,11 @@ export class PageWeaveTrigger implements INodeType {
 					method: 'POST',
 					path: webhooksPath(websiteId),
 					body,
-					idempotencyKey: idempotencyKey(this, body),
+					idempotencyKey: idempotencyKey(this, {
+						action: 'create',
+						nonce: createNonce(this),
+						body,
+					}),
 				});
 
 				const webhookId = created?.id ? String(created.id) : '';
@@ -396,10 +426,12 @@ export class PageWeaveTrigger implements INodeType {
 						method: 'DELETE',
 						path: `${webhooksPath(websiteId)}/${encodeSegment(webhookId)}`,
 					}).catch(() => undefined);
+					clearCreateNonce(this);
 					throw rethrowAsPageWeaveError(this.getNode(), error);
 				}
 
 				writeState(staticData, slot, { id: webhookId, secret, ...config });
+				clearCreateNonce(this);
 				return true;
 			},
 
@@ -439,6 +471,7 @@ export class PageWeaveTrigger implements INodeType {
 				}
 
 				clearState(staticData, slot);
+				clearCreateNonce(this);
 				return true;
 			},
 		},

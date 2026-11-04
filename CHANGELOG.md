@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.2
+
+Fixes webhook re-registration after a workflow is deactivated.
+
+- The trigger uses a fresh create `Idempotency-Key` per webhook lifecycle.
+  PageWeave replays a POST response for 24 hours, so reactivating a workflow
+  replayed the ID of the endpoint that deactivation had deleted and the
+  follow-up PATCH returned 404.
+- Secret rotation uses a unique key per call instead of replaying an earlier
+  rotation response.
+
 ## 0.1.1
 
 Fixes the PageWeave Trigger Website picker.
